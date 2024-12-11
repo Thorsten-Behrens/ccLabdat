@@ -68,7 +68,7 @@ ccCleanLabLoadDirect = function(vsFieldCodes = "",
   lDbConCleanLab = list()
 
   ## Get the database credentials
-  lDbConCleanLab = ccGetDbConfig(sDataBaseName = "DbCleanLab", sUser = "UsrLabRead", sConfigFile = sConfigFile)
+  lDbConCleanLab = edDbCredsYaml(sDataBaseName = "DbCleanLab", sUser = "UsrLabRead", sConfigFile = sConfigFile)
 
   ## Get the database credentials
   ### Measurements ####
