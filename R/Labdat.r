@@ -279,7 +279,7 @@ FROM measurement
 ccCleanLabTransform = function(lCleanLab,
                                sUseCase = "CaseDebug",
                                sFnDictsXls,
-                               sConfigFile = "config.yml"
+                               sFnConfigFile = "config.yml"
                                # sSoildatVersion = "Kobo",
                                # bMakeColumnsShort = FALSE
 )
@@ -288,7 +288,7 @@ ccCleanLabTransform = function(lCleanLab,
   # sProject = "PREZ_Z1_E1"
   # sUseCase = "CaseModelling"
   # sFnDictsXls = paste0(sPathcc,"/ccSoildat/data/SoildatDictionaries.xlsx")
-  # sConfigFile = "C:/Users/waech/OneDrive - Berner Fachhochschule/999_R/cc/ccKeys/config.yml"
+  # sFnConfigFile = "C:/Users/waech/OneDrive - Berner Fachhochschule/999_R/cc/ccKeys/config.yml"
   # lCleanLab =  lCleanLabNew
 
   ## Prepare empty dfs
@@ -331,7 +331,7 @@ ccCleanLabTransform = function(lCleanLab,
 
   ## lDicts #####
   # Load lDicts
-  lDicts = ccSoildatReadXlsDict(sFnDictsXls, sConfigFile, sSoildatVersion, bUseDevelopmentViews)
+  lDicts = ccSoildatReadXlsDict(sFnDictsXls, sFnConfigFile, sSoildatVersion, bUseDevelopmentViews)
 
   # Prepare empty dfs
   dfMeasurements = data.frame()

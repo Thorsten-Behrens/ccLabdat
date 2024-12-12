@@ -8,7 +8,7 @@ ccCleanLabTransform(
   lCleanLab,
   sUseCase = "CaseDebug",
   sFnDictsXls,
-  sConfigFile = "config.yml"
+  sFnConfigFile = "config.yml"
 )
 }
 \arguments{
