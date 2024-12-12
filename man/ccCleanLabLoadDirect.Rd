@@ -4,16 +4,10 @@
 \alias{ccCleanLabLoadDirect}
 \title{Extract and combine raw data from ccCleanLabLoadDirect}
 \usage{
-ccCleanLabLoadDirect(
-  vsFieldCodes = "",
-  sDbCleanLabVersion = "DbCleanLab",
-  sConfigFile = "config.yml"
-)
+ccCleanLabLoadDirect(vsFieldCodes = "", lDbCon = list())
 }
 \arguments{
-\item{sDbCleanLabVersion}{Version of DbCleanLab to use;  Default: "DbCleanLab". "DbCleanLabDevelopment" should be used for testing during development}
-
-\item{sConfigFile}{Path to the config file (.yml) with the database credentials}
+\item{lDbCon}{Database credentials}
 
 \item{vsIdSampeKobo}{vsIdSampeKobo Field codes to extract; vector of field codes. Names must be the same as in CleanLab column "field_code" (e.g. "PREZ 123")}
 }

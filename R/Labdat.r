@@ -5,8 +5,7 @@
 #' Load various datasets from db based on project names
 #'
 #' @param vsIdSampeKobo vsIdSampeKobo Field codes to extract; vector of field codes. Names must be the same as in CleanLab column "field_code" (e.g. "PREZ 123")
-#' @param sDbCleanLabVersion Version of DbCleanLab to use;  Default: "DbCleanLab". "DbCleanLabDevelopment" should be used for testing during development
-#' @param sConfigFile Path to the config file (.yml) with the database credentials
+#' @param lDbCon Database credentials
 #'
 #' @return list of dataframes
 #'
@@ -14,15 +13,10 @@
 #'
 #' @export
 #'
-ccCleanLabLoadDirect = function(vsFieldCodes = "",
-                                sDbCleanLabVersion = "DbCleanLab",
-                                sConfigFile = "config.yml")
+ccCleanLabLoadDirect = function(vsFieldCodes = "", lDbCon = list())
 {
-
   ## For testing only (delete later)
   #  vsIdSampeKobo = "PREZ 123"
-  #  sDbCleanLabVersion = ""
-  #  sConfigFile = "C:/Users/waech/OneDrive - Berner Fachhochschule/999_R/cc/ccKeys/config.yml"
 
   lDfCleanLabData = list()
 
@@ -64,24 +58,16 @@ ccCleanLabLoadDirect = function(vsFieldCodes = "",
                          RVersion = R.Version()$version.string,
                          timespamp = format(Sys.time(),'%Y_%m_%d %H:%M:%S'))
 
-  ## prepare database connections soildat and cleanlab
-  lDbConCleanLab = list()
-
-  ## Get the database credentials
-  lDbConCleanLab = edDbCredsYaml(sDataBaseName = "DbCleanLab", sUser = "UsrLabRead", sConfigFile = sConfigFile)
-
-  ## Get the database credentials
-  ### Measurements ####
 
   ## Prepare sql query
   sqlQuery = ccQueryMeasurement(vsFieldCodes)
 
   ## Get data from server
-  connCleanLab = ccDbConnect(lDbConCleanLab)
-  dfLabMeasurements = dbGetQuery(connCleanLab, sqlQuery)
+  dbConCleanLab = ccDbConnect(lDbCon)
+  dfLabMeasurements = dbGetQuery(dbConCleanLab, sqlQuery)
 
   # Disconnect from the clean lab database
-  dbDisconnect(connCleanLab)
+  dbDisconnect(dbConCleanLab)
 
   ## Check if dfSamplesMeas is not empty
   if(nrow(dfLabMeasurements) != 0)
@@ -92,7 +78,6 @@ ccCleanLabLoadDirect = function(vsFieldCodes = "",
       # What do you think is the sample ID?
       # dfSamples$IdSampleKobo
       dfLabMeasurements$IdSampleKoboBackUpFromMeasTab = dfLabMeasurements$id
-
 
       # pH treatment: We need to add the extraction to pH to separate pH H2O from pH CaCl2
       if (nrow(dfLabMeasurements[which(dfLabMeasurements$nabo_analysis_parameter_code == "pH"), ]) != 0)
@@ -156,11 +141,9 @@ ccCleanLabLoadDirect = function(vsFieldCodes = "",
 #'
 #' @param vsIdSampeKobo vsIdSampeKobo Field codes to extract; vector of field codes. Names must be the same as in CleanLab column "field_code" (e.g. "PREZ 123")
 #' @param sDbCleanLabVersion Version of DbCleanLab to use;  Default: "DbCleanLab". "DbCleanLabDevelopment" should be used for testing during development
-#' @param sConfigFile Path to the config file (.yml) with the database credentials
-#'
 #' @param nDelay Delay in seconds between each try
 #' @param nTimes Number of times to repeat (tries)
-#' @param sConfigFile Path to the config file (.yml) with the database credentials
+#' @param lDbCon Database credentials
 #'
 #' @return list of dataframes
 #'
@@ -169,8 +152,7 @@ ccCleanLabLoadDirect = function(vsFieldCodes = "",
 #' @export
 #'
 ccCleanLabLoad = function(vsFieldCodes = "",
-                          sDbCleanLabVersion = "DbCleanLab",
-                          sConfigFile = "//bfh.ch/data/LFE/HAFL/KOBO/998_KOBO_Data_and_Apps/01_DataManagement/00_Functions_and_Packages/cc/ccKeys/config_kobo.yml",
+                          lDbCon = list(),
                           nDelay = 20, # Seconds
                           nTimes = 6)
 
@@ -189,23 +171,20 @@ ccCleanLabLoad = function(vsFieldCodes = "",
     tryCatch({
       cat(": Try to extract data from CleanLab")
       lLabData = ccCleanLabLoadDirect(vsFieldCodes = vsFieldCodes,
-                                      sDbCleanLabVersion = sDbCleanLabVersion,
-                                      sConfigFile = sConfigFile)
+                                      lDbCon = lDbCon)
       Feedback = "Success"
       cat(" -> Success \n")
       return(lLabData)
 
     }, error = function(e) {
+
       Feedback = "Error in ccCleanLabLoadDirect"
       cat(paste0(" -> Error in ccCleanLabLoadDirect, redo with a delay of ", nDelay, " seconds\n"))
       Sys.sleep(nDelay)
+
       # nCounter <- nCounter + 1
     })
   }
-
-
-
-
 }
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

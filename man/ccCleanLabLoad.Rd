@@ -4,25 +4,18 @@
 \alias{ccCleanLabLoad}
 \title{TryCatch function for ccCleanLabLoadDirect}
 \usage{
-ccCleanLabLoad(
-  vsFieldCodes = "",
-  sDbCleanLabVersion = "DbCleanLab",
-  sConfigFile =
-    "//bfh.ch/data/LFE/HAFL/KOBO/998_KOBO_Data_and_Apps/01_DataManagement/00_Functions_and_Packages/cc/ccKeys/config_kobo.yml",
-  nDelay = 20,
-  nTimes = 6
-)
+ccCleanLabLoad(vsFieldCodes = "", lDbCon = list(), nDelay = 20, nTimes = 6)
 }
 \arguments{
-\item{sDbCleanLabVersion}{Version of DbCleanLab to use;  Default: "DbCleanLab". "DbCleanLabDevelopment" should be used for testing during development}
-
-\item{sConfigFile}{Path to the config file (.yml) with the database credentials}
+\item{lDbCon}{Database credentials}
 
 \item{nDelay}{Delay in seconds between each try}
 
 \item{nTimes}{Number of times to repeat (tries)}
 
 \item{vsIdSampeKobo}{vsIdSampeKobo Field codes to extract; vector of field codes. Names must be the same as in CleanLab column "field_code" (e.g. "PREZ 123")}
+
+\item{sDbCleanLabVersion}{Version of DbCleanLab to use;  Default: "DbCleanLab". "DbCleanLabDevelopment" should be used for testing during development}
 }
 \value{
 list of dataframes
