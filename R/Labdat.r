@@ -1,4 +1,11 @@
 
+## Load all required packages
+require(DBI, quietly = TRUE)
+require(RPostgreSQL, quietly = TRUE)
+require(stringi, quietly = TRUE)
+require(RPostgres, quietly = TRUE)
+require(hms, quietly = TRUE)
+
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #' Extract and combine raw data from ccCleanLabLoadDirect
 #'
@@ -24,13 +31,6 @@ ccCleanLabLoadDirect = function(vsFieldCodes = "", lDbCon = list())
   lDfCleanLabData[["dfLabMeasurements"]] = data.frame()
   lDfCleanLabData[["dfMethods"]] = data.frame()
   lDfCleanLabData[["TechnicalInformations"]] = data.frame()
-
-  ## Load all required packages
-  require(DBI, quietly = TRUE)
-  require(RPostgreSQL, quietly = TRUE)
-  require(stringi, quietly = TRUE)
-  require(RPostgres, quietly = TRUE)
-  require(hms, quietly = TRUE)
 
   ## Setting parameters (start time, version, ...) ####
   ## Set Start time
@@ -295,6 +295,7 @@ ccCleanLabTransform = function(lCleanLab,
 
   # Setup ####
   # Set version and note
+  # TB: wozu wird das benötigt?
   nVersion = 0.1
   sVersionNote = "There's a fly in the ointment."
 
@@ -310,6 +311,7 @@ ccCleanLabTransform = function(lCleanLab,
   dfTechnicalInfo = lCleanLab$TechnicalInformations
 
   # Collect technical informations
+  # TB: wozu wird das benötigt?
   dfVersion = data.frame(CodePart = "ccCleanLabTransform",
                          CodeVersion = nVersion,
                          CodeNote = sVersionNote,
@@ -331,7 +333,7 @@ ccCleanLabTransform = function(lCleanLab,
 
   ## lDicts #####
   # Load lDicts
-  lDicts = ccSoildatReadXlsDict(sFnDictsXls, sFnConfigFile, sSoildatVersion, bUseDevelopmentViews)
+  lDicts = ccSoildat::ccSoildatReadXlsDict(sFnDictsXls, sFnConfigFile, sSoildatVersion, bUseDevelopmentViews)
 
   # Prepare empty dfs
   dfMeasurements = data.frame()
@@ -386,5 +388,70 @@ ccCleanLabTransform = function(lCleanLab,
 
   # return selected Soildat data
   return(lCleanLab)
+}
+
+
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#  TODO: requries rework, when lab dat comes from Labdat and not from Soildat
+ccLoadLabData = function(lDbCon, sDbSoildat, sFnDictsXlsx,
+                         sProject = "AG_MURG_Z1_E2", sUseCase = "CaseModelling")
+{
+  lDbCon$Db = sDbSoildat
+
+  # Load Soildat raw data
+  lSoildatRaw = ccSoildat::ccDbSoildatLoad(vsProjects = sProject,
+                                           sSoildatVersion = "Kobo",
+                                           lDbCon = lDbCon,
+                                           bGetProject = F,
+                                           bGetSites = T,
+                                           bGetSample = T,
+                                           bGetSoilLayer = F,
+                                           bGetSoildatCsvExport = F,
+                                           bGetSamplingDesign = F,
+                                           bGetSamplingRequirement = F,
+                                           nDelay = 2, # Seconds
+                                           nTimes = 2)
+
+  # Load measurements form Clean Lab
+  lCleanLab = ccLabdat::ccCleanLabLoad(vsFieldCodes = lSoildatRaw$dfSamples$field_code,
+                                       lDbCon = lDbCon,
+                                       nDelay = 2, # Seconds
+                                       nTimes = 3)
+
+  # Transform data lCleanLab
+  lCleanLab = ccLabdat::ccCleanLabTransform(lCleanLab,
+                                            sUseCase = sUseCase,
+                                            sFnDictsXls = sFnDictsXlsx,
+                                            lDbCon)
+
+  # extract lab measurements
+  dfLabMeasurementsWide = lCleanLab$dfLabMeasurementsWide
+
+  # Get Kobo sample ids
+  dfSamples = lSoildatRaw$dfSamples
+
+  # Subset dfSamples to get only the columns field_code and id_sample_soildat
+  dfSamples = dfSamples[, c("field_code", "id_sample_kobo", "id_observation_soildat")]
+
+  # Remove id_sample_soildat from dfLabMeasurementsWide
+  dfLabMeasurementsWide$id_sample_kobo = NULL
+
+  # Merge dfSamples with dfLabMeasurementsWide by field_code
+  dfLabMeasurementsWide = base::merge(dfSamples, dfLabMeasurementsWide , by.y = "field_code", by.x = "field_code", all.y = TRUE)
+
+  # Get coordinates from Soildat$dfSites
+  dfSites = lSoildatRaw$dfSites
+
+  # Selecting only the columns id_obs_soildat, x_coordinate, y_coordinate; if needed more columns can be added
+  dfSites = dfSites[, c("id_observation_soildat", "x_coordinate", "y_coordinate")]
+
+  # Merge coordinates with lab measurements by id_obs_soildat and id_observation_soildat
+  dfLabData = base::merge(dfSites, dfLabMeasurementsWide , by.y = "id_observation_soildat", by.x = "id_observation_soildat", all.y = TRUE)
+
+  # clean
+  dfLabData = dfLabData[, !(names(dfLabData) %in% c("id_observation_soildat", "field_code", "id_sample_soildat"))]
+  names(dfLabData)[1:3] = c("X", "Y", "id_sample")
+
+  return(dfLabData)
 }
 
